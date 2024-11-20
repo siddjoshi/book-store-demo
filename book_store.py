@@ -1,5 +1,6 @@
 import json
 import os
+from flask import Flask, request, jsonify
 
 class Book:
     def __init__(self, title, author, price, quantity):
@@ -46,70 +47,59 @@ class BookStore:
                 return True
         return False
 
-def main():
-    store = BookStore()
+    def search_books(self, query):
+        results = []
+        for book in self.books:
+            if query.lower() in book['title'].lower() or query.lower() in book['author'].lower():
+                results.append(book)
+        return results
 
-    while True:
-        print("\nBook Store CLI")
-        print("1. Add Book")
-        print("2. View Books")
-        print("3. Update Book")
-        print("4. Delete Book")
-        print("5. Exit")
+    def get_summary_statistics(self):
+        total_books = len(self.books)
+        total_inventory_value = sum(book['price'] * book['quantity'] for book in self.books)
+        return {
+            'total_books': total_books,
+            'total_inventory_value': total_inventory_value
+        }
 
-        choice = input("Enter your choice: ")
+app = Flask(__name__)
+store = BookStore()
 
-        if choice == '1':
-            title = input("Enter title: ")
-            author = input("Enter author: ")
-            price = float(input("Enter price: "))
-            quantity = int(input("Enter quantity: "))
-            book = Book(title, author, price, quantity)
-            store.add_book(book)
-            print("Book added successfully!")
+@app.route('/books', methods=['POST'])
+def add_book():
+    data = request.get_json()
+    book = Book(data['title'], data['author'], data['price'], data['quantity'])
+    store.add_book(book)
+    return jsonify({'message': 'Book added successfully!'}), 201
 
-        elif choice == '2':
-            books = store.view_books()
-            if books:
-                for book in books:
-                    print(f"Title: {book['title']}, Author: {book['author']}, Price: {book['price']}, Quantity: {book['quantity']}")
-            else:
-                print("No books available.")
+@app.route('/books', methods=['GET'])
+def view_books():
+    books = store.view_books()
+    return jsonify(books), 200
 
-        elif choice == '3':
-            title = input("Enter the title of the book to update: ")
-            new_title = input("Enter new title (leave blank to keep current): ")
-            new_author = input("Enter new author (leave blank to keep current): ")
-            new_price = input("Enter new price (leave blank to keep current): ")
-            new_quantity = input("Enter new quantity (leave blank to keep current): ")
+@app.route('/books/<title>', methods=['PUT'])
+def update_book(title):
+    new_details = request.get_json()
+    if store.update_book(title, new_details):
+        return jsonify({'message': 'Book updated successfully!'}), 200
+    return jsonify({'message': 'Book not found.'}), 404
 
-            new_details = {}
-            if new_title:
-                new_details['title'] = new_title
-            if new_author:
-                new_details['author'] = new_author
-            if new_price:
-                new_details['price'] = float(new_price)
-            if new_quantity:
-                new_details['quantity'] = int(new_quantity)
+@app.route('/books/<title>', methods=['DELETE'])
+def delete_book(title):
+    if store.delete_book(title):
+        return jsonify({'message': 'Book deleted successfully!'}), 200
+    return jsonify({'message': 'Book not found.'}), 404
 
-            if store.update_book(title, new_details):
-                print("Book updated successfully!")
-            else:
-                print("Book not found.")
+@app.route('/books/search', methods=['GET'])
+def search_books():
+    query = request.args.get('query')
+    results = store.search_books(query)
+    return jsonify(results), 200
 
-        elif choice == '4':
-            title = input("Enter the title of the book to delete: ")
-            if store.delete_book(title):
-                print("Book deleted successfully!")
-            else:
-                print("Book not found.")
-
-        elif choice == '5':
-            break
-
-        else:
-            print("Invalid choice. Please try again.")
+@app.route('/books/summary', methods=['GET'])
+def get_summary_statistics():
+    stats = store.get_summary_statistics()
+    return jsonify(stats), 200
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)
