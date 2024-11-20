@@ -84,5 +84,23 @@ class TestBookStore(unittest.TestCase):
         self.assertEqual(stats['total_books'], 2)
         self.assertEqual(stats['total_inventory_value'], 10.99 * 5 + 12.99 * 3)
 
+    def test_export_books_to_pdf(self):
+        book1 = Book('Test Title 1', 'Test Author 1', 10.99, 5)
+        book2 = Book('Test Title 2', 'Test Author 2', 12.99, 3)
+        self.store.add_book(book1)
+        self.store.add_book(book2)
+        response = self.app.get('/books/export/pdf')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(os.path.exists('books.pdf'))
+
+    def test_export_books_to_excel(self):
+        book1 = Book('Test Title 1', 'Test Author 1', 10.99, 5)
+        book2 = Book('Test Title 2', 'Test Author 2', 12.99, 3)
+        self.store.add_book(book1)
+        self.store.add_book(book2)
+        response = self.app.get('/books/export/excel')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(os.path.exists('books.xlsx'))
+
 if __name__ == '__main__':
     unittest.main()
