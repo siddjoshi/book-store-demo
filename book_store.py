@@ -1,6 +1,8 @@
 import json
 import os
 from flask import Flask, request, jsonify
+from fpdf import FPDF
+import pandas as pd
 
 class Book:
     def __init__(self, title, author, price, quantity):
@@ -62,6 +64,18 @@ class BookStore:
             'total_inventory_value': total_inventory_value
         }
 
+    def export_books_to_pdf(self):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        for book in self.books:
+            pdf.cell(200, 10, txt=f"Title: {book['title']}, Author: {book['author']}, Price: {book['price']}, Quantity: {book['quantity']}", ln=True)
+        pdf.output("books.pdf")
+
+    def export_books_to_excel(self):
+        df = pd.DataFrame(self.books)
+        df.to_excel("books.xlsx", index=False)
+
 app = Flask(__name__)
 store = BookStore()
 
@@ -100,6 +114,16 @@ def search_books():
 def get_summary_statistics():
     stats = store.get_summary_statistics()
     return jsonify(stats), 200
+
+@app.route('/books/export/pdf', methods=['GET'])
+def export_books_to_pdf():
+    store.export_books_to_pdf()
+    return jsonify({'message': 'Books exported to PDF successfully!'}), 200
+
+@app.route('/books/export/excel', methods=['GET'])
+def export_books_to_excel():
+    store.export_books_to_excel()
+    return jsonify({'message': 'Books exported to Excel successfully!'}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

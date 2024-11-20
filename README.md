@@ -56,6 +56,16 @@ curl http://127.0.0.1:5000/books/search?query=Gatsby
 curl http://127.0.0.1:5000/books/summary
 ```
 
+### Export Books to PDF
+```sh
+curl http://127.0.0.1:5000/books/export/pdf
+```
+
+### Export Books to Excel
+```sh
+curl http://127.0.0.1:5000/books/export/excel
+```
+
 ## Code Comments
 
 The code includes comments for clarity. Please refer to the `book_store.py` and `test_book_store.py` files for detailed explanations of each function and class.
