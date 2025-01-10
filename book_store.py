@@ -1,6 +1,4 @@
 import json
-import os
-from flask import Flask, request, jsonify
 from fpdf import FPDF
 import pandas as pd
 
@@ -75,55 +73,3 @@ class BookStore:
     def export_books_to_excel(self):
         df = pd.DataFrame(self.books)
         df.to_excel("books.xlsx", index=False)
-
-app = Flask(__name__)
-store = BookStore()
-
-@app.route('/books', methods=['POST'])
-def add_book():
-    data = request.get_json()
-    book = Book(data['title'], data['author'], data['price'], data['quantity'])
-    store.add_book(book)
-    return jsonify({'message': 'Book added successfully!'}), 201
-
-@app.route('/books', methods=['GET'])
-def view_books():
-    books = store.view_books()
-    return jsonify(books), 200
-
-@app.route('/books/<title>', methods=['PUT'])
-def update_book(title):
-    new_details = request.get_json()
-    if store.update_book(title, new_details):
-        return jsonify({'message': 'Book updated successfully!'}), 200
-    return jsonify({'message': 'Book not found.'}), 404
-
-@app.route('/books/<title>', methods=['DELETE'])
-def delete_book(title):
-    if store.delete_book(title):
-        return jsonify({'message': 'Book deleted successfully!'}), 200
-    return jsonify({'message': 'Book not found.'}), 404
-
-@app.route('/books/search', methods=['GET'])
-def search_books():
-    query = request.args.get('query')
-    results = store.search_books(query)
-    return jsonify(results), 200
-
-@app.route('/books/summary', methods=['GET'])
-def get_summary_statistics():
-    stats = store.get_summary_statistics()
-    return jsonify(stats), 200
-
-@app.route('/books/export/pdf', methods=['GET'])
-def export_books_to_pdf():
-    store.export_books_to_pdf()
-    return jsonify({'message': 'Books exported to PDF successfully!'}), 200
-
-@app.route('/books/export/excel', methods=['GET'])
-def export_books_to_excel():
-    store.export_books_to_excel()
-    return jsonify({'message': 'Books exported to Excel successfully!'}), 200
-
-if __name__ == "__main__":
-    app.run(debug=True)
